@@ -12,6 +12,7 @@ TactiQ is a self-play reinforcement learning project that trains agents to play 
 
 ## Project Structure
 
+```text
 TactiQ/
 ├── alphazero_version/
 │   └── coming_soon.txt           # Placeholder for future AlphaZero-style version
@@ -42,7 +43,6 @@ TactiQ/
     ```bash
     pip install torch numpy
     ```
-
 ---
 
 ## Usage
