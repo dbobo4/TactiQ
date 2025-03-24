@@ -28,6 +28,7 @@ TactiQ/
 │   ├── trained_model_X.pth       # Saved PyTorch model (X agent)
 │   └── runs/                     # TensorBoard logs
 └── README.md                     # This file
+```
 
 ---
 
