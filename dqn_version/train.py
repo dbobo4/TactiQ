@@ -16,25 +16,36 @@ Usage:
         python train.py
 """
 
+import os
 import torch
 from agent import Agent
-from TicTacToeEnv import TicTacToeEnv
+from tictactoeenv import TicTacToeEnv
 from torch.utils.tensorboard.writer import SummaryWriter
 import copy
 from lastmemory import LastMemory
 
 ILLEGAL_MOVE_LIMIT = 100
-MAX_EPISODES = 10_000
+MAX_EPISODES = 5_000
 
 # it can be used for logging later
-# writer = SummaryWriter("runs/common_run")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # dqn_version_file
+RUNS_DIR = os.path.join(BASE_DIR, "runs", "common_run")
+MODELS_DIR = os.path.join(BASE_DIR, "trained_models")
+
+os.makedirs(RUNS_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
+
+# it can be used for logging later
+writer = SummaryWriter(RUNS_DIR)
+
+env = TicTacToeEnv()
 
 env = TicTacToeEnv()
 
 # creation of the two agent
 # with shared environment (architecture)
-agent_x = Agent(env, +1)  # X is +1
-agent_o = Agent(env, -1)  # O is -1
+agent_x = Agent(env, 1, writer)  # X is +1
+agent_o = Agent(env, -1, writer)  # O is -1
 
 # lastMemory object Initialization for both of the agent
 agent_x_memory = LastMemory()
@@ -50,6 +61,10 @@ while episode_count < MAX_EPISODES:
     
     is_x_has_reached_max_illegal_move = False
     is_o_has_reached_max_illegal_move = False
+
+    # init rewards
+    reward_x = 0.0
+    reward_o = 0.0
 
     while True:
         state_old = agent_x.get_state()
@@ -125,11 +140,19 @@ while episode_count < MAX_EPISODES:
         env.reset()
     
     print(f"Episode {episode_count}, X_reward={reward_x:.3f}, O_reward={reward_o:.3f}")
+    
+    writer.add_scalar("Episode/Reward_X", reward_x, episode_count)
+    writer.add_scalar("Episode/Reward_O", reward_o, episode_count)
+    writer.add_scalar("Episode/IllegalMoves_X", x_illegal_move_cnt, episode_count)
+    writer.add_scalar("Episode/IllegalMoves_O", o_illegal_move_cnt, episode_count)
 
     episode_count += 1
     print('episode counter has been increased by 1')
 
+# to run tensorboard GO TO THE ROOT (TACTIQ/) directory and write this into cmd: tensorboard --logdir=dqn_version/runs/common_run
+# then navigate to http://localhost:6006/
+
 # save models after finished with the training
-torch.save(agent_x.model.state_dict(), 'trained_model_X.pth')
-torch.save(agent_o.model.state_dict(), 'trained_model_O.pth')
+torch.save(agent_x.model.state_dict(), os.path.join(MODELS_DIR, 'trained_model_X.pth'))
+torch.save(agent_o.model.state_dict(), os.path.join(MODELS_DIR, 'trained_model_O.pth'))
 print("Training completed and both models have been saved successfully!")

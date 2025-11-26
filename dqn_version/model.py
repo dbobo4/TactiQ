@@ -76,7 +76,8 @@ class QvalueTrainer:
     with these values states, actions, rewards, next_states, done
     """
     
-    def __init__(self, model, lr, gamma, writer):
+    def __init__(self, model, lr, gamma, writer, player_mark):
+        self.player_mark = player_mark
         self.writer = writer
         self.model_step = 0
         self.lr = lr
@@ -110,18 +111,19 @@ class QvalueTrainer:
         # prediction of the model
         pred = self.model(states)
 
-        target_predictions = pred.clone()
-        for idx in range(len(done)):
-            # state result corresponding reward
-            new_reward = rewards[idx]
-            # if the game continued (not terminated)
-            # it is important to have next state for the Bellmann equation
-            if not done[idx]:
-                next_state_single = next_states[idx].unsqueeze(0) # this solely batch has to have the format (1, 4, 4)
-                # grabbing the best predicted value from the corresponding next state
-                new_reward = rewards[idx] + self.gamma * torch.max(self.model(next_state_single))
-            #  the updated reward is calculated using the next state's value according to the Bellman equation
-            target_predictions[idx][actions[idx]] = new_reward
+        with torch.no_grad():
+            target_predictions = pred.clone()
+            for idx in range(len(done)):
+                # state result corresponding reward
+                new_reward = rewards[idx]
+                # if the game continued (not terminated)
+                # it is important to have next state for the Bellmann equation
+                if not done[idx]:
+                    next_state_single = next_states[idx].unsqueeze(0) # this solely batch has to have the format (1, 4, 4)
+                    # grabbing the best predicted value from the corresponding next state
+                    new_reward = rewards[idx] + self.gamma * torch.max(self.model(next_state_single))
+                #  the updated reward is calculated using the next state's value according to the Bellman equation
+                target_predictions[idx][actions[idx]] = new_reward
     
         # simple pytorch backpropagation
         self.optimizer.zero_grad()
@@ -133,6 +135,7 @@ class QvalueTrainer:
         self.optimizer.step()
         self.model_step += 1
         
-        # to run tensorboard go to the root directory and write this into cmd: tensorboard --logdir=runs/common_run
-        # then navigate to http://localhost:6006/
-        self.writer.add_scalar("Loss", loss.item(), self.model_step)
+        if self.player_mark == 1:
+            self.writer.add_scalar("Loss_X", loss.item(), self.model_step)
+        elif self.player_mark == -1:
+            self.writer.add_scalar("Loss_O", loss.item(), self.model_step)

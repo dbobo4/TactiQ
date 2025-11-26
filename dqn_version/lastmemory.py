@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 class LastMemory:
     """
 A helper class for storing the last memory of an agent's move.
@@ -14,13 +16,20 @@ Attributes:
     reward (float): The reward received after the action.
     state_new (Any): The state after the action.
     done (bool): Flag indicating whether the episode has ended.
-"""
-    def __init__(self):
+    """
+    
+    state_old: Any
+    action: Optional[int]
+    reward: Optional[float]
+    state_new: Any
+    done: Optional[bool]
+
+    def __init__(self) -> None:
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.state_old = None
-        self.action = None
-        self.reward = None
+        self.action    = None
+        self.reward    = None
         self.state_new = None
-        self.done = None
+        self.done      = None

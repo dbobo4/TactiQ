@@ -33,16 +33,15 @@ import torch
 import random
 from collections import deque
 from model import ConvolutionalNeuralNetwork, QvalueTrainer
-from torch.utils.tensorboard import SummaryWriter # for logging in Tensorboard
+from torch.utils.tensorboard.writer import SummaryWriter # for logging in Tensorboard
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
 
-writer = SummaryWriter(log_dir="dqn_version/runs/common_run")
-
 class Agent:
-    def __init__(self, env, player_mark):
+    def __init__(self, env, player_mark, writer):
+        self.writer = writer
         self.step = 0
         self.player_mark = player_mark
         self.env = env
@@ -51,7 +50,7 @@ class Agent:
         self.memory = deque(maxlen=MAX_MEMORY) # deque() to handle memory efficiency
         # self.writer = writer # common tensorboard logging
         self.model = ConvolutionalNeuralNetwork()
-        self.trainer = QvalueTrainer(self.model, LEARNING_RATE, self.gamma, writer)
+        self.trainer = QvalueTrainer(self.model, LEARNING_RATE, self.gamma, writer, player_mark)
     
     def get_state(self):
         actual_board_state = self.env.get_board_actual_state()
@@ -100,5 +99,8 @@ class Agent:
         # Create a mask filled with -inf so invalid moves cannot be selected
         mask = torch.full_like(q_vals, float('-inf'))
         mask[valid] = q_vals[valid]
+        
+        self.writer.add_scalar("Epsilon", self.epsilon, self.step)
+        self.writer.add_histogram("Q_max", q_vals.detach().cpu().numpy(), self.step)
 
         return int(torch.argmax(mask).item())

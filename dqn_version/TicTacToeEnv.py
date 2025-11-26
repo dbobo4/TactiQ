@@ -99,22 +99,20 @@ class TicTacToeEnv():
 
         # Check weather the index is occupied or not
         if self.board[row][col] != 0:
-            # need to set the termination value to True to terminate and
-            # to use the pure reward(-5) in Bellman equation
-            return -5.0, True, True # the move is illegal
+            return -5.0, False, True # the move is illegal
 
         # Set player's mark
         self.board[row][col] = current_player_mark
 
-        # Check for draw
-        is_draw = self.check_is_draw()
-        if is_draw:
-            return -2.0, True, False
-
-        # Check actual player's win
+        # Először győzelem
         is_win = self.check_is_win(current_player_mark)
         if is_win:
             return 10.0, True, False
+
+        # Utána döntetlen
+        is_draw = self.check_is_draw()
+        if is_draw:
+            return -2.0, True, False
 
         # If nothing happens we give back the value of consecutive marks
         score = self.count_consecutive(current_player_mark, row, col)

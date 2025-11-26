@@ -2,11 +2,12 @@
 Run this file if you'd like to play against the trained model.
 """
 
+import os
 from enum import Enum
 import tkinter
 from tkinter import messagebox
 from agent import Agent
-from TicTacToeEnv import TicTacToeEnv
+from tictactoeenv import TicTacToeEnv
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter # logging
 import numpy as np
@@ -16,7 +17,10 @@ writer = SummaryWriter("runs/common_run")
 # Load the AI model
 env = TicTacToeEnv()
 agent = Agent(env, -1)
-agent.model.load_state_dict(torch.load('trained_model_O.pth'))  # Load trained model
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "trained_models", "trained_model_O.pth")
+
+agent.model.load_state_dict(torch.load(MODEL_PATH))  # Load trained model
 agent.model.eval()  # Set to evaluation mode
 
 class Orientation(Enum):
