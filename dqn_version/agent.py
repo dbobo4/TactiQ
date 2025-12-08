@@ -100,6 +100,7 @@ class Agent:
         mask = torch.full_like(q_vals, float('-inf'))
         mask[valid] = q_vals[valid]
         
+        # This 2 line could be moved before "return random.choice(valid)", to show the values from 1000 steps
         self.writer.add_scalar("Epsilon", self.epsilon, self.step)
         self.writer.add_histogram("Q_max", q_vals.detach().cpu().numpy(), self.step)
 

@@ -149,7 +149,7 @@ while episode_count < MAX_EPISODES:
     episode_count += 1
     print('episode counter has been increased by 1')
 
-# to run tensorboard GO TO THE ROOT (TACTIQ/) directory and write this into cmd: tensorboard --logdir=dqn_version/runs/common_run
+# to run tensorboard GO TO THE ROOT (TACTIQ/) directory and write this into cmd: tensorboard --logdir=dqn_version/runs
 # then navigate to http://localhost:6006/
 
 # save models after finished with the training
