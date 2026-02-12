@@ -1,0 +1,13 @@
+# Core
+numpy
+tqdm
+
+# PyTorch (CPU build by default from pip; for CUDA install, use the official PyTorch instructions)
+torch
+
+# Logging
+tensorboard
+
+# Evaluation / plotting
+matplotlib
+pandas
