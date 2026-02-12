@@ -24,6 +24,9 @@ from torch.utils.tensorboard.writer import SummaryWriter
 import copy
 from lastmemory import LastMemory
 
+# NEW: tqdm is used to display a clean training progress bar instead of print statements
+from tqdm import tqdm
+
 ILLEGAL_MOVE_LIMIT = 100
 MAX_EPISODES = 5_000
 
@@ -52,6 +55,10 @@ agent_x_memory = LastMemory()
 agent_o_memory = LastMemory()
 
 episode_count = 0
+
+# NEW: tqdm progress bar for episodes
+pbar = tqdm(total=MAX_EPISODES, desc="Training", unit="episode")
+
 while episode_count < MAX_EPISODES:
     done_x = None
     done_o = None
@@ -139,15 +146,23 @@ while episode_count < MAX_EPISODES:
         
         env.reset()
     
-    print(f"Episode {episode_count}, X_reward={reward_x:.3f}, O_reward={reward_o:.3f}")
-    
     writer.add_scalar("Episode/Reward_X", reward_x, episode_count)
     writer.add_scalar("Episode/Reward_O", reward_o, episode_count)
     writer.add_scalar("Episode/IllegalMoves_X", x_illegal_move_cnt, episode_count)
     writer.add_scalar("Episode/IllegalMoves_O", o_illegal_move_cnt, episode_count)
 
+    # NEW: update tqdm progress bar and show useful live metrics
+    pbar.set_postfix(
+        X_reward=f"{reward_x:.3f}",
+        O_reward=f"{reward_o:.3f}",
+        X_illegal=x_illegal_move_cnt,
+        O_illegal=o_illegal_move_cnt,
+    )
+    pbar.update(1)
+
     episode_count += 1
-    print('episode counter has been increased by 1')
+
+pbar.close()
 
 # to run tensorboard GO TO THE ROOT (TACTIQ/) directory and write this into cmd: tensorboard --logdir=dqn_version/runs
 # then navigate to http://localhost:6006/
@@ -156,3 +171,5 @@ while episode_count < MAX_EPISODES:
 torch.save(agent_x.model.state_dict(), os.path.join(MODELS_DIR, 'trained_model_X.pth'))
 torch.save(agent_o.model.state_dict(), os.path.join(MODELS_DIR, 'trained_model_O.pth'))
 print("Training completed and both models have been saved successfully!")
+
+writer.close()

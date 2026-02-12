@@ -39,6 +39,9 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
 
+# NEW: Target network update frequency (hard update every N training steps)
+TARGET_UPDATE_EVERY = 200  # you can tune this (e.g. 100, 200, 500)
+
 class Agent:
     def __init__(self, env, player_mark, writer):
         self.writer = writer
@@ -49,9 +52,27 @@ class Agent:
         self.gamma = 0.9
         self.memory = deque(maxlen=MAX_MEMORY) # deque() to handle memory efficiency
         # self.writer = writer # common tensorboard logging
+
         self.model = ConvolutionalNeuralNetwork()
-        self.trainer = QvalueTrainer(self.model, LEARNING_RATE, self.gamma, writer, player_mark)
-    
+
+        # NEW: Target network for stabilizing training
+        self.target_model = ConvolutionalNeuralNetwork()
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()  # target network is used only for inference
+
+        self.trainer = QvalueTrainer(
+            self.model,
+            self.target_model,  # NEW: pass target model to trainer
+            LEARNING_RATE,
+            self.gamma,
+            writer,
+            player_mark
+        )
+
+    # NEW: Hard update (copy online model weights into target model)
+    def update_target_network(self):
+        self.target_model.load_state_dict(self.model.state_dict())
+
     def get_state(self):
         actual_board_state = self.env.get_board_actual_state()
         
@@ -74,8 +95,16 @@ class Agent:
         states, actions, rewards, next_states, dones = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, dones)
 
+        # NEW: Periodically update target network after training step(s)
+        if self.trainer.model_step % TARGET_UPDATE_EVERY == 0:
+            self.update_target_network()
+
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
+
+        # NEW: Periodically update target network after training step(s)
+        if self.trainer.model_step % TARGET_UPDATE_EVERY == 0:
+            self.update_target_network()
         
         
     # Here we are going to use ACTION MASKING to deal with occupied places effectively
@@ -90,7 +119,7 @@ class Agent:
         if not exploit_only and random.randint(0, 400) < self.epsilon:
             return random.choice(valid)
 
-        # Exploitation: choose the valid action with the highest Q‑value
+        # Exploitation: choose the valid action with the highest Q-value
         state_t = torch.tensor(state, dtype=torch.float).unsqueeze(0)
         # self.model(state_t) → shape: (batch_size, num_actions)
         # batch_size=1 → (1, 16); [0] selects the first (and only) row → shape (16,)

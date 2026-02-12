@@ -76,13 +76,15 @@ class QvalueTrainer:
     with these values states, actions, rewards, next_states, done
     """
     
-    def __init__(self, model, lr, gamma, writer, player_mark):
+    # NEW: target_model is added to the trainer for stabilized Q-learning updates
+    def __init__(self, model, target_model, lr, gamma, writer, player_mark):
         self.player_mark = player_mark
         self.writer = writer
         self.model_step = 0
         self.lr = lr
         self.gamma = gamma
         self.model = model
+        self.target_model = target_model  # NEW: target network (no gradient updates)
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
@@ -120,8 +122,10 @@ class QvalueTrainer:
                 # it is important to have next state for the Bellmann equation
                 if not done[idx]:
                     next_state_single = next_states[idx].unsqueeze(0) # this solely batch has to have the format (1, 4, 4)
-                    # grabbing the best predicted value from the corresponding next state
-                    new_reward = rewards[idx] + self.gamma * torch.max(self.model(next_state_single))
+
+                    # NEW: use target network to compute the next state's value (stabilizes learning)
+                    new_reward = rewards[idx] + self.gamma * torch.max(self.target_model(next_state_single))
+
                 #  the updated reward is calculated using the next state's value according to the Bellman equation
                 target_predictions[idx][actions[idx]] = new_reward
     
