@@ -17,6 +17,8 @@ Usage:
 """
 
 import os
+import random
+import numpy as np
 import torch
 from agent import Agent
 from tictactoeenv import TicTacToeEnv
@@ -29,6 +31,11 @@ from tqdm import tqdm
 
 ILLEGAL_MOVE_LIMIT = 100
 MAX_EPISODES = 5_000
+SEED = 0
+
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+random.seed(SEED)
 
 # it can be used for logging later
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # dqn_version_file
